@@ -720,7 +720,7 @@ const FALLBACK_RATES = {
 async function fetchRates() {
   const status = document.getElementById('c-status');
   try {
-    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    const res = await fetch('https://api.frankfurter.app/latest?from=USD');
     if (!res.ok) throw new Error('Network response was not ok');
     const data = await res.json();
     rates = data.rates;
