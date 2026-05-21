@@ -12,34 +12,50 @@
 
   <div class="app">
     <header>
-      <h1>CONV<span>ERT</span></h1>
-      <p class="tagline">Currency &amp; Units</p>
+      <div class="header-inner">
+        <div class="header-top">
+          <button class="settings-btn" onclick="toggleSettings()">&#9881;&#65039;</button>
+        </div>
+        <h1><span data-i18n="headerText">CONV</span><span class="accent" data-i18n="headerAccent">ERT</span></h1>
+        <p class="tagline" data-i18n="tagline">Currency &amp; Units</p>
+        <div class="settings-popup" id="settings-popup">
+          <div class="settings-item">
+            <span class="settings-icon">&#127760;</span>
+            <span data-i18n="settingsLanguage">Language</span>
+            <select id="lang-select" onchange="applyLanguage(this.value)">
+              <option value="en">English</option>
+              <option value="zh">&#20013;&#25991;</option>
+              <option value="ar">&#1575;&#1604;&#1593;&#1585;&#1576;&#1610;&#1577;</option>
+            </select>
+          </div>
+        </div>
+      </div>
     </header>
 
     <div class="tabs">
-      <button class="tab active" data-tab="currency" onclick="switchTab('currency')">💱 Currency</button>
-      <button class="tab" data-tab="unit" onclick="switchTab('unit')">📐 Units</button>
+      <button class="tab active" data-tab="currency" onclick="switchTab('currency')" data-i18n="tabCurrency">💱 Currency</button>
+      <button class="tab" data-tab="unit" onclick="switchTab('unit')" data-i18n="tabUnits">📐 Units</button>
     </div>
 
     <!-- CURRENCY VIEW -->
     <div id="currency-view" class="view active">
       <div class="card">
         <div class="field-group">
-          <label>Amount</label>
+          <label data-i18n="labelAmount">Amount</label>
           <div class="row">
             <input type="number" id="c-amount" value="1" oninput="convertCurrency()" placeholder="0" />
             <select id="c-from" onchange="convertCurrency()"></select>
           </div>
         </div>
 
-        <button class="swap-btn" onclick="swapCurrency()" title="Swap currencies">
+        <button class="swap-btn" onclick="swapCurrency()" title="Swap currencies" data-i18n-title="swapCurrencies">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
           </svg>
         </button>
 
         <div class="field-group">
-          <label>To</label>
+          <label data-i18n="labelTo">To</label>
           <div class="row">
             <select id="c-to" onchange="convertCurrency()"></select>
           </div>
@@ -47,7 +63,7 @@
 
         <div class="result-box">
           <div class="result-num" id="c-result">—</div>
-          <div class="result-label" id="c-result-label">Select currencies</div>
+          <div class="result-label" id="c-result-label" data-i18n="resultCurrency">Select currencies</div>
         </div>
 
         <div class="status" id="c-status">Fetching live rates…</div>
@@ -60,21 +76,21 @@
         <div class="cat-row" id="cat-row"></div>
 
         <div class="field-group">
-          <label>Amount</label>
+          <label data-i18n="labelAmount">Amount</label>
           <div class="row">
             <input type="number" id="u-amount" value="1" oninput="convertUnit()" placeholder="0" />
             <select id="u-from" onchange="convertUnit()"></select>
           </div>
         </div>
 
-        <button class="swap-btn" onclick="swapUnit()" title="Swap units">
+        <button class="swap-btn" onclick="swapUnit()" title="Swap units" data-i18n-title="swapUnits">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
           </svg>
         </button>
 
         <div class="field-group">
-          <label>To</label>
+          <label data-i18n="labelTo">To</label>
           <div class="row">
             <select id="u-to" onchange="convertUnit()"></select>
           </div>
@@ -82,7 +98,7 @@
 
         <div class="result-box">
           <div class="result-num" id="u-result">—</div>
-          <div class="result-label" id="u-result-label">Select units</div>
+          <div class="result-label" id="u-result-label" data-i18n="resultUnits">Select units</div>
         </div>
       </div>
     </div>
