@@ -770,7 +770,6 @@ function convertCurrency() {
   const result = (amount / rates[from]) * rates[to];
   document.getElementById('c-result').textContent =
     result.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-  document.getElementById('c-result-label').textContent = `${amount} ${from} → ${to}`;
 }
 
 function swapCurrency() {
