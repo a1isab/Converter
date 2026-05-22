@@ -1,20 +1,106 @@
 // ===========================
+// CONFIG
+// ===========================
+const CONFIG = {
+  HISTORY_MAX: 10,
+  REFRESH_COOLDOWN: 60000,
+  CRYPTO_CACHE_TTL: 300000,
+  PRECISION_DEFAULT: 4,
+  FAUCET_FALLBACK_RATE: 60,
+  SUPPORTED_LANGS: ['en', 'zh', 'ar', 'ru'],
+  STORAGE_KEYS: {
+    HISTORY: 'conversionHistory',
+    PREV_RATES: 'previousRates',
+    CRYPTO_CACHE: 'cryptoCache',
+    FAVORITES: 'conversionFavorites',
+    LANG: 'lang',
+    PRECISION: 'precision',
+    THEME: 'theme'
+  }
+};
+
+// Backward-compatible aliases
+const SUPPORTED_LANGS = CONFIG.SUPPORTED_LANGS;
+const HISTORY_KEY = CONFIG.STORAGE_KEYS.HISTORY;
+const HISTORY_MAX = CONFIG.HISTORY_MAX;
+const PREV_RATES_KEY = CONFIG.STORAGE_KEYS.PREV_RATES;
+const REFRESH_COOLDOWN = CONFIG.REFRESH_COOLDOWN;
+const CRYPTO_CACHE_KEY = CONFIG.STORAGE_KEYS.CRYPTO_CACHE;
+const CRYPTO_CACHE_TTL = CONFIG.CRYPTO_CACHE_TTL;
+const FAV_KEY = CONFIG.STORAGE_KEYS.FAVORITES;
+
+// ===========================
 // STATE
 // ===========================
 let rates = {};
 let currentCategory = 'length';
-const SUPPORTED_LANGS = ['en', 'zh', 'ar', 'ru'];
-let currentLang = localStorage.getItem('lang') || 'en';
-let precision = parseInt(localStorage.getItem('precision') || '4');
-const HISTORY_KEY = 'conversionHistory';
-const HISTORY_MAX = 10;
-const PREV_RATES_KEY = 'previousRates';
-const REFRESH_COOLDOWN = 60000;
+let currentLang = localStorage.getItem(CONFIG.STORAGE_KEYS.LANG) || 'en';
+let precision = parseInt(localStorage.getItem(CONFIG.STORAGE_KEYS.PRECISION) || CONFIG.PRECISION_DEFAULT);
 let previousRates = null;
 let lastRefreshTime = 0;
 let lastCurrencyRecord = null;
 let lastUnitRecord = null;
 let lastCryptoRecord = null;
+
+// ===========================
+// DOM CACHE
+// ===========================
+const $ = function (id) { return document.getElementById(id); };
+const DOM = {
+  toast: $('toast'),
+  cAmount: $('c-amount'),
+  cFrom: $('c-from'),
+  cTo: $('c-to'),
+  cResult: $('c-result'),
+  cStatus: $('c-status'),
+  cRateLine: $('rate-line'),
+  cRateChange: $('rate-change'),
+  cRefreshBtn: $('refresh-btn'),
+  uAmount: $('u-amount'),
+  uFrom: $('u-from'),
+  uTo: $('u-to'),
+  uResult: $('u-result'),
+  crAmount: $('cr-amount'),
+  crFrom: $('cr-from'),
+  crTo: $('cr-to'),
+  crResult: $('cr-result'),
+  crStatus: $('cr-status'),
+  settingsPopup: $('settings-popup'),
+  historyList: $('history-list'),
+  historyView: $('history-view'),
+  catRow: $('cat-row'),
+  currencyView: $('currency-view'),
+  unitView: $('unit-view'),
+  historyViewEl: $('history-view'),
+  cryptoView: $('crypto-view')
+};
+
+// ===========================
+// DEBOUNCE
+// ===========================
+function debounce(fn, delay) {
+  var timer;
+  return function () {
+    var ctx = this, args = arguments;
+    clearTimeout(timer);
+    timer = setTimeout(function () { fn.apply(ctx, args); }, delay);
+  };
+}
+
+var debouncedConvertCurrency = debounce(function () { convertCurrency(); }, 300);
+var debouncedConvertUnit = debounce(function () { convertUnit(); }, 300);
+var debouncedConvertCrypto = debounce(function () { convertCrypto(); }, 300);
+
+// ===========================
+// RESULT FEEDBACK HELPER
+// ===========================
+function showResult(el, text) {
+  el.textContent = text;
+  el.classList.remove('updated');
+  // Force reflow to restart animation
+  void el.offsetWidth;
+  el.classList.add('updated');
+}
 
 // ===========================
 // LANGUAGES & TRANSLATIONS
@@ -54,6 +140,7 @@ const TRANSLATIONS = {
     statusUpdated: 'Rates updated: ',
     settingsLanguage: 'Language',
     settingsPrecision: 'Precision',
+    settingsTheme: 'Theme',
     copiedText: 'Copied to clipboard!',
     refreshRates: '\u21BB Refresh',
     refreshing: 'Refreshing...',
@@ -67,7 +154,9 @@ const TRANSLATIONS = {
       time: 'Time',
       energy: 'Energy',
       pressure: 'Pressure',
-      data: 'Data Storage'
+      data: 'Data Storage',
+      cooking: 'Cooking',
+      binary_data: 'Binary Data'
     },
     currencyNames: {
       USD: 'US Dollar',
@@ -298,7 +387,16 @@ const TRANSLATIONS = {
       megabyte: 'Megabyte (MB)',
       gigabyte: 'Gigabyte (GB)',
       terabyte: 'Terabyte (TB)',
-      petabyte: 'Petabyte (PB)'
+      petabyte: 'Petabyte (PB)',
+      fluid_ounce: 'Fluid ounce (fl oz)',
+      stick_butter: 'Stick of butter',
+      pinch: 'Pinch',
+      dash: 'Dash',
+      kibibyte: 'Kibibyte (KiB)',
+      mebibyte: 'Mebibyte (MiB)',
+      gibibyte: 'Gibibyte (GiB)',
+      tebibyte: 'Tebibyte (TiB)',
+      pebibyte: 'Pebibyte (PiB)'
     }
   },
   zh: {
@@ -329,6 +427,7 @@ const TRANSLATIONS = {
     statusUpdated: '\u6C47\u7387\u5DF2\u66F4\u65B0: ',
     settingsLanguage: '\u8BED\u8A00',
     settingsPrecision: '\u7CBE\u5EA6',
+    settingsTheme: '\u4E3B\u9898',
     copiedText: '\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01',
     refreshRates: '\u21BB \u5237\u65B0',
     refreshing: '\u5237\u65B0\u4E2D...',
@@ -342,7 +441,9 @@ const TRANSLATIONS = {
       time: '\u65F6\u95F4',
       energy: '\u80FD\u91CF',
       pressure: '\u538B\u529B',
-      data: '\u6570\u636E\u5B58\u50A8'
+      data: '\u6570\u636E\u5B58\u50A8',
+      cooking: '\u70F9\u996A',
+      binary_data: '\u4E8C\u8FDB\u5236\u6570\u636E'
     },
     currencyNames: {
       USD: '美元',
@@ -573,7 +674,16 @@ const TRANSLATIONS = {
       megabyte: '\u5146\u5B57\u8282 (MB)',
       gigabyte: '\u5409\u5B57\u8282 (GB)',
       terabyte: '\u592A\u5B57\u8282 (TB)',
-      petabyte: '\u62CD\u5B57\u8282 (PB)'
+      petabyte: '\u62CD\u5B57\u8282 (PB)',
+      fluid_ounce: '\u6DB2\u91CF\u76CE\u53F8 (fl oz)',
+      stick_butter: '\u9EC4\u6CB9\u68D2',
+      pinch: '\u4E00\u5C0F\u64AE',
+      dash: '\u4E00\u64AE',
+      kibibyte: '\u5343\u5B57\u8282\uFF08\u4E8C\u8FDB\u5236\uFF09(KiB)',
+      mebibyte: '\u5146\u5B57\u8282\uFF08\u4E8C\u8FDB\u5236\uFF09(MiB)',
+      gibibyte: '\u5409\u5B57\u8282\uFF08\u4E8C\u8FDB\u5236\uFF09(GiB)',
+      tebibyte: '\u592A\u5B57\u8282\uFF08\u4E8C\u8FDB\u5236\uFF09(TiB)',
+      pebibyte: '\u62CD\u5B57\u8282\uFF08\u4E8C\u8FDB\u5236\uFF09(PiB)'
     }
   },
   ar: {
@@ -604,6 +714,7 @@ const TRANSLATIONS = {
     statusUpdated: '\u062A\u0645 \u062A\u062D\u062F\u064A\u062B \u0627\u0644\u0623\u0633\u0639\u0627\u0631: ',
     settingsLanguage: '\u0627\u0644\u0644\u063A\u0629',
     settingsPrecision: '\u0627\u0644\u062F\u0642\u0629',
+    settingsTheme: '\u0627\u0644\u0645\u0638\u0647\u0631',
     copiedText: '\u062A\u0645 \u0627\u0644\u0646\u0633\u062E \u0625\u0644\u0649 \u0627\u0644\u062D\u0627\u0641\u0638\u0629!',
     refreshRates: '\u21BB \u062A\u062D\u062F\u064A\u062B',
     refreshing: '\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u062F\u064A\u062B...',
@@ -617,7 +728,9 @@ const TRANSLATIONS = {
       time: '\u0648\u0642\u062A',
       energy: '\u0637\u0627\u0642\u0629',
       pressure: '\u0636\u063A\u0637',
-      data: '\u062A\u062E\u0632\u064A\u0646 \u0628\u064A\u0627\u0646\u0627\u062A'
+      data: '\u062A\u062E\u0632\u064A\u0646 \u0628\u064A\u0627\u0646\u0627\u062A',
+      cooking: '\u0637\u0628\u062E',
+      binary_data: '\u0628\u064A\u0627\u0646\u0627\u062A \u062B\u0646\u0627\u0626\u064A\u0629'
     },
     currencyNames: {
       USD: 'دولار أمريكي',
@@ -848,7 +961,16 @@ const TRANSLATIONS = {
       megabyte: '\u0645\u064A\u062C\u0627\u0628\u0627\u064A\u062A (MB)',
       gigabyte: '\u062C\u064A\u062C\u0627\u0628\u0627\u064A\u062A (GB)',
       terabyte: '\u062A\u064A\u0631\u0627\u0628\u0627\u064A\u062A (TB)',
-      petabyte: '\u0628\u064A\u062A\u0627\u0628\u0627\u064A\u062A (PB)'
+      petabyte: '\u0628\u064A\u062A\u0627\u0628\u0627\u064A\u062A (PB)',
+      fluid_ounce: '\u0623\u0648\u0646\u0635\u0629 \u0633\u0627\u0626\u0644\u0629 (fl oz)',
+      stick_butter: '\u0639\u0648\u062F \u0632\u0628\u062F\u0629',
+      pinch: '\u0631\u0634\u0629',
+      dash: '\u0646\u0642\u0631\u0629',
+      kibibyte: '\u0643\u064A\u0628\u064A\u0628\u0627\u064A\u062A (KiB)',
+      mebibyte: '\u0645\u064A\u0628\u064A\u0628\u0627\u064A\u062A (MiB)',
+      gibibyte: '\u062C\u064A\u0628\u064A\u0628\u0627\u064A\u062A (GiB)',
+      tebibyte: '\u062A\u064A\u0628\u064A\u0628\u0627\u064A\u062A (TiB)',
+      pebibyte: '\u0628\u064A\u0628\u064A\u0628\u0627\u064A\u062A (PiB)'
     }
   },
   ru: {
@@ -879,6 +1001,7 @@ const TRANSLATIONS = {
     statusUpdated: 'Курсы обновлены: ',
     settingsLanguage: 'Язык',
     settingsPrecision: 'Точность',
+    settingsTheme: 'Тема',
     copiedText: 'Скопировано в буфер обмена!',
     refreshRates: '\u21BB Обновить',
     refreshing: 'Обновление...',
@@ -892,7 +1015,9 @@ const TRANSLATIONS = {
       time: 'Время',
       energy: 'Энергия',
       pressure: 'Давление',
-      data: 'Хранение данных'
+      data: 'Хранение данных',
+      cooking: 'Кулинария',
+      binary_data: 'Двоичные данные'
     },
     currencyNames: {
       USD: 'Доллар США',
@@ -1123,7 +1248,16 @@ const TRANSLATIONS = {
       megabyte: 'Мегабайт (MB)',
       gigabyte: 'Гигабайт (GB)',
       terabyte: 'Терабайт (TB)',
-      petabyte: 'Петабайт (PB)'
+      petabyte: 'Петабайт (PB)',
+      fluid_ounce: 'Жидкая унция (fl oz)',
+      stick_butter: 'Пачка масла',
+      pinch: 'Щепотка',
+      dash: 'Капля',
+      kibibyte: 'Кибибайт (KiB)',
+      mebibyte: 'Мебибайт (MiB)',
+      gibibyte: 'Гибибайт (GiB)',
+      tebibyte: 'Тебибайт (TiB)',
+      pebibyte: 'Пебибайт (PiB)'
     }
   }
 };
@@ -1212,6 +1346,29 @@ const UNITS = {
     gigabyte:   { label: 'Gigabyte (GB)',  f: 1e9 },
     terabyte:   { label: 'Terabyte (TB)',  f: 1e12 },
     petabyte:   { label: 'Petabyte (PB)',  f: 1e15 }
+  },
+  cooking: {
+    gram:         { label: 'Gram (g)',               f: 1 },
+    kilogram:     { label: 'Kilogram (kg)',          f: 1000 },
+    ounce:        { label: 'Ounce (oz)',             f: 28.3495 },
+    pound:        { label: 'Pound (lb)',             f: 453.592 },
+    milliliter:   { label: 'Milliliter (mL)',        f: 1 },
+    liter:        { label: 'Liter (L)',              f: 1000 },
+    teaspoon:     { label: 'Teaspoon (tsp)',         f: 4.92892 },
+    tablespoon:   { label: 'Tablespoon (tbsp)',      f: 14.7868 },
+    cup:          { label: 'Cup',                     f: 236.588 },
+    fluid_ounce:  { label: 'Fluid ounce (fl oz)',    f: 29.5735 },
+    stick_butter: { label: 'Stick of butter',        f: 113 },
+    pinch:        { label: 'Pinch',                   f: 0.308 },
+    dash:         { label: 'Dash',                    f: 0.616 }
+  },
+  binary_data: {
+    byte:       { label: 'Byte (B)',         f: 1 },
+    kibibyte:   { label: 'Kibibyte (KiB)',   f: 1024 },
+    mebibyte:   { label: 'Mebibyte (MiB)',   f: 1048576 },
+    gibibyte:   { label: 'Gibibyte (GiB)',   f: 1073741824 },
+    tebibyte:   { label: 'Tebibyte (TiB)',   f: 1099511627776 },
+    pebibyte:   { label: 'Pebibyte (PiB)',   f: 1125899906842624 }
   }
 };
 
@@ -1258,26 +1415,28 @@ const CRYPTO_LIST = [
   { id: 'dai',          symbol: 'DAI',  label: 'Dai (DAI)' }
 ];
 const CRYPTO_FIAT = ['USD', 'EUR', 'GBP', 'JPY', 'CNY'];
-const CRYPTO_CACHE_KEY = 'cryptoCache';
-const CRYPTO_CACHE_TTL = 300000; // 5 min
 let cryptoPrices = {};
 
 async function fetchRates() {
-  const status = document.getElementById('c-status');
+  var status = $('c-status');
   try {
     // Save current rates as previous before overwriting
     if (Object.keys(rates).length > 0) {
       localStorage.setItem(PREV_RATES_KEY, JSON.stringify({ rates: rates, timestamp: Date.now() }));
       previousRates = { rates: rates, timestamp: Date.now() };
     }
-    const res = await fetch('https://open.er-api.com/v6/latest/USD');
-    if (!res.ok) throw new Error('Network response was not ok');
-    const data = await res.json();
+    var res = await fetch('https://open.er-api.com/v6/latest/USD');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    var data = await res.json();
+    if (!data || !data.rates) throw new Error('Invalid API response');
     rates = data.rates;
-    status.textContent = TRANSLATIONS[currentLang].statusUpdated + new Date().toLocaleTimeString();
+    if (status) status.textContent = TRANSLATIONS[currentLang].statusUpdated + new Date().toLocaleTimeString();
   } catch (e) {
-    status.textContent = TRANSLATIONS[currentLang].statusOffline;
-    rates = { ...FALLBACK_RATES };
+    if (status) {
+      status.textContent = TRANSLATIONS[currentLang].statusOffline + ' (' + e.message + ')';
+      if (Object.keys(rates).length > 0) updateOfflineAge();
+    }
+    if (Object.keys(rates).length === 0) rates = { ...FALLBACK_RATES };
   }
   populateCurrencySelects(Object.keys(rates).sort());
   convertCurrency();
@@ -1313,12 +1472,12 @@ function convertCurrency() {
   const to     = document.getElementById('c-to').value;
 
   if (!rates[from] || !rates[to] || isNaN(amount)) {
-    document.getElementById('c-result').textContent = '—';
+    showResult($('c-result'), '\u2014');
     return;
   }
 
   const result = (amount / rates[from]) * rates[to];
-  document.getElementById('c-result').textContent = formatResult(result);
+  showResult($('c-result'), formatResult(result));
   if (!lastCurrencyRecord || lastCurrencyRecord.from !== from || lastCurrencyRecord.to !== to || lastCurrencyRecord.amount !== amount) {
     addToHistory({ type: 'currency', from: from, to: to, amount: amount, result: result });
     lastCurrencyRecord = { from: from, to: to, amount: amount };
@@ -1384,7 +1543,7 @@ function startRefreshCountdown(sec) {
 }
 
 function fetchCryptoPrices() {
-  var status = document.getElementById('cr-status');
+  var status = $('cr-status');
   if (status) status.textContent = TRANSLATIONS[currentLang].cryptoLoading || 'Loading crypto prices\u2026';
 
   // Check cache
@@ -1404,10 +1563,11 @@ function fetchCryptoPrices() {
 
   fetch(url)
     .then(function (res) {
-      if (!res.ok) throw new Error('API error');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();
     })
     .then(function (data) {
+      if (!data || typeof data !== 'object') throw new Error('Invalid API response');
       cryptoPrices = {};
       CRYPTO_LIST.forEach(function (c) {
         cryptoPrices[c.symbol] = data[c.id] ? data[c.id].usd : 0;
@@ -1419,7 +1579,16 @@ function fetchCryptoPrices() {
     })
     .catch(function () {
       if (status) status.textContent = TRANSLATIONS[currentLang].cryptoOffline || 'Crypto prices offline';
-      // Fallback prices
+      // Fallback prices if cache exists, otherwise hardcoded
+      try {
+        var cached = JSON.parse(localStorage.getItem(CRYPTO_CACHE_KEY));
+        if (cached && cached.prices) {
+          cryptoPrices = cached.prices;
+          populateCryptoSelects();
+          convertCrypto();
+          return;
+        }
+      } catch (e2) { /* ignore */ }
       cryptoPrices = { BTC: 45000, ETH: 3200, ADA: 0.45, SOL: 140, XRP: 0.62, USDT: 1, USDC: 1, DAI: 1 };
       populateCryptoSelects();
       convertCrypto();
@@ -1440,12 +1609,12 @@ function populateCryptoSelects() {
 }
 
 function convertCrypto() {
-  var amount = parseFloat(document.getElementById('cr-amount').value);
-  var from = document.getElementById('cr-from').value;
-  var to = document.getElementById('cr-to').value;
+  var amount = parseFloat($('cr-amount').value);
+  var from = $('cr-from').value;
+  var to = $('cr-to').value;
 
   if (isNaN(amount)) {
-    document.getElementById('cr-result').textContent = '\u2014';
+    showResult($('cr-result'), '\u2014');
     return;
   }
 
@@ -1458,7 +1627,7 @@ function convertCrypto() {
   } else if (rates[from]) {
     fromInUsd = 1 / rates[from];
   } else {
-    document.getElementById('cr-result').textContent = '\u2014';
+    showResult($('cr-result'), '\u2014');
     return;
   }
 
@@ -1469,12 +1638,12 @@ function convertCrypto() {
   } else if (rates[to]) {
     toInUsd = 1 / rates[to];
   } else {
-    document.getElementById('cr-result').textContent = '\u2014';
+    showResult($('cr-result'), '\u2014');
     return;
   }
 
   var result = (amount * fromInUsd) / toInUsd;
-  document.getElementById('cr-result').textContent = formatResult(result);
+  showResult($('cr-result'), formatResult(result));
   if (!lastCryptoRecord || lastCryptoRecord.from !== from || lastCryptoRecord.to !== to || lastCryptoRecord.amount !== amount) {
     addToHistory({ type: 'crypto', from: from, to: to, amount: amount, result: result });
     lastCryptoRecord = { from: from, to: to, amount: amount };
@@ -1527,7 +1696,7 @@ function convertUnit() {
   const to     = document.getElementById('u-to').value;
 
   if (isNaN(amount)) {
-    document.getElementById('u-result').textContent = '\u2014';
+    showResult($('u-result'), '\u2014');
     return;
   }
 
@@ -1539,7 +1708,7 @@ function convertUnit() {
     result = (amount * units[from].f) / units[to].f;
   }
 
-  document.getElementById('u-result').textContent = formatResult(result);
+  showResult($('u-result'), formatResult(result));
   if (!lastUnitRecord || lastUnitRecord.category !== currentCategory || lastUnitRecord.from !== from || lastUnitRecord.to !== to || lastUnitRecord.amount !== amount) {
     addToHistory({ type: 'unit', category: currentCategory, from: from, to: to, amount: amount, result: result });
     lastUnitRecord = { category: currentCategory, from: from, to: to, amount: amount };
@@ -1564,7 +1733,8 @@ function addToHistory(entry) {
   history.unshift(entry);
   if (history.length > HISTORY_MAX) history.pop();
   localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-  var hv = document.getElementById('history-view');
+  trimStorage();
+  var hv = $('history-view');
   if (hv && hv.classList.contains('active')) renderHistory();
 }
 
@@ -1594,7 +1764,6 @@ function formatTimestamp(ms) {
 // ===========================
 // FAVORITES
 // ===========================
-const FAV_KEY = 'conversionFavorites';
 
 function getFavorites() {
   try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
@@ -1777,6 +1946,21 @@ function setPrecision(val) {
   convertUnit();
 }
 
+function applyTheme() {
+  var theme = localStorage.getItem(CONFIG.STORAGE_KEYS.THEME) || 'dark';
+  var isLight = theme === 'light';
+  document.documentElement.classList.toggle('light', isLight);
+  var btn = $('theme-btn');
+  if (btn) btn.textContent = isLight ? TRANSLATIONS[currentLang].settingsTheme + ': Light' : TRANSLATIONS[currentLang].settingsTheme + ': Dark';
+}
+
+function toggleTheme() {
+  var theme = localStorage.getItem(CONFIG.STORAGE_KEYS.THEME) || 'dark';
+  theme = theme === 'light' ? 'dark' : 'light';
+  localStorage.setItem(CONFIG.STORAGE_KEYS.THEME, theme);
+  applyTheme();
+}
+
 function copyResult(type) {
   const el = document.getElementById(type + '-result');
   const text = el.textContent;
@@ -1802,7 +1986,15 @@ function switchTab(tab) {
   document.getElementById('crypto-view').classList.toggle('active', tab === 'crypto');
   if (tab === 'history') renderHistory();
   if (tab === 'currency' || tab === 'unit') updateFavStars();
-  if (tab === 'crypto') { populateCryptoSelects(); convertCrypto(); }
+  if (tab === 'crypto') {
+    populateCryptoSelects();
+    convertCrypto();
+    // Lazy load crypto prices (only on first click)
+    if (!DOM._cryptoFetched) {
+      DOM._cryptoFetched = true;
+      fetchCryptoPrices();
+    }
+  }
 }
 
 // ===========================
@@ -2008,6 +2200,9 @@ function applyLanguage(lang) {
   convertCurrency();
   convertUnit();
 
+  // Re-theme button text in new language
+  applyTheme();
+
   // Highlight active language link
   document.querySelectorAll('.lang-link').forEach(function (el) {
     el.classList.toggle('active', el.dataset.lang === lang);
@@ -2062,12 +2257,101 @@ document.addEventListener('click', function (e) {
   }
 });
 
+// ===========================
+// KEYBOARD SHORTCUTS
+// ===========================
+document.addEventListener('keydown', function (e) {
+  // Alt+S — swap active converter
+  if (e.altKey && e.key === 's') {
+    e.preventDefault();
+    if ($('currency-view').classList.contains('active')) swapCurrency();
+    else if ($('unit-view').classList.contains('active')) swapUnit();
+    else if ($('crypto-view').classList.contains('active')) swapCrypto();
+    return;
+  }
+  // Ctrl+C / Cmd+C — copy active result
+  if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+    if (e.target.closest('.result-num')) {
+      e.preventDefault();
+      var activeResult = $('currency-view').classList.contains('active') ? 'c'
+        : $('unit-view').classList.contains('active') ? 'u'
+        : $('crypto-view').classList.contains('active') ? 'cr' : null;
+      if (activeResult) copyResult(activeResult);
+    }
+    return;
+  }
+  // Escape — close settings popup
+  if (e.key === 'Escape') {
+    var popup = $('settings-popup');
+    if (popup && popup.classList.contains('open')) {
+      popup.classList.remove('open');
+    }
+  }
+});
+
+// ===========================
+// TAB SWIPE ON MOBILE
+// ===========================
+(function () {
+  var tabsEl = document.querySelector('.tabs');
+  if (!tabsEl) return;
+  var startX = 0;
+  tabsEl.addEventListener('touchstart', function (e) {
+    startX = e.touches[0].clientX;
+  }, { passive: true });
+  tabsEl.addEventListener('touchend', function (e) {
+    var diff = e.changedTouches[0].clientX - startX;
+    if (Math.abs(diff) < 50) return;
+    var tabs = ['currency', 'unit', 'history', 'crypto'];
+    var active = tabs.indexOf(document.querySelector('.tab.active').dataset.tab);
+    var next = diff < 0 ? Math.min(active + 1, tabs.length - 1) : Math.max(active - 1, 0);
+    if (next !== active) switchTab(tabs[next]);
+  }, { passive: true });
+})();
+
+// ===========================
+// LOCALSTORAGE CLEANUP
+// ===========================
+function trimStorage() {
+  var totalSize = 0;
+  for (var i = 0; i < localStorage.length; i++) {
+    var key = localStorage.key(i);
+    totalSize += ((localStorage.getItem(key) || '').length * 2); // rough UTF-16 estimate
+  }
+  if (totalSize > 500000) { // ~500KB threshold
+    localStorage.removeItem(PREV_RATES_KEY);
+    var history = getHistory();
+    while (history.length > 5) history.pop();
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }
+}
+
+// ===========================
+// OFFLINE AGE INDICATOR
+// ===========================
+function updateOfflineAge() {
+  if (previousRates && previousRates.timestamp) {
+    var elapsed = Date.now() - previousRates.timestamp;
+    var min = Math.floor(elapsed / 60000);
+    var status = $('c-status');
+    if (min < 60) {
+      status.textContent = 'Last updated ' + min + 'm ago';
+    } else {
+      status.textContent = 'Last updated ' + Math.floor(min / 60) + 'h ago';
+    }
+  }
+}
+
 initLang();
+applyTheme();
+trimStorage();
 fetchRates();
-fetchCryptoPrices();
 renderFavs();
 // Load previous rates from localStorage for rate change display
 try {
   var prev = JSON.parse(localStorage.getItem(PREV_RATES_KEY));
   if (prev && prev.rates && prev.timestamp) previousRates = prev;
 } catch (e) { /* ignore */ }
+// Sync precision select with current value
+var ps = $('precision-select');
+if (ps) ps.value = String(precision);

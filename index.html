@@ -42,6 +42,11 @@
               <option value="8">8</option>
             </select>
           </div>
+          <div class="settings-item">
+            <span class="settings-icon">☀️</span>
+            <span data-i18n="settingsTheme">Theme</span>
+            <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">Dark</button>
+          </div>
         </div>
       </div>
     </header>
@@ -60,9 +65,9 @@
         <div class="converter-layout">
           <div class="conv-section">
             <div class="field-group">
-              <label data-i18n="labelAmount">Amount</label>
-              <select id="c-from" onchange="convertCurrency()"></select>
-              <input type="number" id="c-amount" value="1" oninput="convertCurrency()" placeholder="0" />
+              <label for="c-amount" data-i18n="labelAmount">Amount</label>
+              <select id="c-from" onchange="convertCurrency()" aria-label="From currency"></select>
+              <input type="number" id="c-amount" value="1" oninput="debouncedConvertCurrency()" placeholder="0" aria-label="Conversion amount" />
             </div>
           </div>
 
@@ -74,12 +79,12 @@
 
           <div class="conv-section">
             <div class="field-group">
-              <label data-i18n="labelTo">To</label>
-              <select id="c-to" onchange="convertCurrency()"></select>
+              <label for="c-to" data-i18n="labelTo">To</label>
+              <select id="c-to" onchange="convertCurrency()" aria-label="To currency"></select>
               <div class="result-box">
-                <div class="result-num" id="c-result">—</div>
+                <div class="result-num" id="c-result" aria-live="polite" role="status">—</div>
                 <button class="copy-btn" onclick="copyResult('c')" aria-label="Copy result" title="Copy">📋</button>
-                <button class="fav-btn" onclick="toggleFav(this)" data-fav="c" aria-label="Favorite" title="Favorite">☆</button>
+                <button class="fav-btn" onclick="toggleFav(this)" data-fav="c" aria-label="Toggle favorite" title="Favorite">☆</button>
               </div>
             </div>
           </div>
@@ -103,9 +108,9 @@
         <div class="converter-layout">
           <div class="conv-section">
             <div class="field-group">
-              <label data-i18n="labelAmount">Amount</label>
-              <select id="u-from" onchange="convertUnit()"></select>
-              <input type="number" id="u-amount" value="1" oninput="convertUnit()" placeholder="0" />
+              <label for="u-amount" data-i18n="labelAmount">Amount</label>
+              <select id="u-from" onchange="convertUnit()" aria-label="From unit"></select>
+              <input type="number" id="u-amount" value="1" oninput="debouncedConvertUnit()" placeholder="0" aria-label="Conversion amount" />
             </div>
           </div>
 
@@ -117,12 +122,12 @@
 
           <div class="conv-section">
             <div class="field-group">
-              <label data-i18n="labelTo">To</label>
-              <select id="u-to" onchange="convertUnit()"></select>
+              <label for="u-to" data-i18n="labelTo">To</label>
+              <select id="u-to" onchange="convertUnit()" aria-label="To unit"></select>
               <div class="result-box">
-                <div class="result-num" id="u-result">—</div>
+                <div class="result-num" id="u-result" aria-live="polite" role="status">—</div>
                 <button class="copy-btn" onclick="copyResult('u')" aria-label="Copy result" title="Copy">📋</button>
-                <button class="fav-btn" onclick="toggleFav(this)" data-fav="u" aria-label="Favorite" title="Favorite">☆</button>
+                <button class="fav-btn" onclick="toggleFav(this)" data-fav="u" aria-label="Toggle favorite" title="Favorite">☆</button>
               </div>
             </div>
           </div>
@@ -136,9 +141,9 @@
         <div class="converter-layout">
           <div class="conv-section">
             <div class="field-group">
-              <label data-i18n="labelAmount">Amount</label>
-              <select id="cr-from" onchange="convertCrypto()"></select>
-              <input type="number" id="cr-amount" value="1" oninput="convertCrypto()" placeholder="0" />
+              <label for="cr-amount" data-i18n="labelAmount">Amount</label>
+              <select id="cr-from" onchange="convertCrypto()" aria-label="From crypto"></select>
+              <input type="number" id="cr-amount" value="1" oninput="debouncedConvertCrypto()" placeholder="0" aria-label="Conversion amount" />
             </div>
           </div>
 
@@ -150,10 +155,10 @@
 
           <div class="conv-section">
             <div class="field-group">
-              <label data-i18n="labelTo">To</label>
-              <select id="cr-to" onchange="convertCrypto()"></select>
+              <label for="cr-to" data-i18n="labelTo">To</label>
+              <select id="cr-to" onchange="convertCrypto()" aria-label="To crypto"></select>
               <div class="result-box">
-                <div class="result-num" id="cr-result">—</div>
+                <div class="result-num" id="cr-result" aria-live="polite" role="status">—</div>
                 <button class="copy-btn" onclick="copyResult('cr')" aria-label="Copy result" title="Copy">📋</button>
               </div>
             </div>
