@@ -41,6 +41,8 @@ let lastRefreshTime = 0;
 let lastCurrencyRecord = null;
 let lastUnitRecord = null;
 let lastCryptoRecord = null;
+// Set this flag to true before auto-triggered conversions that should NOT record history
+var _skipHistory = false;
 
 // ===========================
 // DOM CACHE
@@ -119,7 +121,7 @@ const TRANSLATIONS = {
     tabCurrency: '\uD83D\uDCB1 Currency',
     tabUnits: '\uD83D\uDCD0 Units',
     tabHistory: '\uD83D\uDCCB History',
-    tabCrypto: '\uD83D\uDE09 Crypto',
+    tabCrypto: '\uD83E\uDE99 Crypto',
     swapCrypto: 'Swap',
     cryptoLoading: 'Loading crypto prices\u2026',
     cryptoUpdated: 'Prices updated',
@@ -406,7 +408,7 @@ const TRANSLATIONS = {
     tabCurrency: '\uD83D\uDCB1 \u8D27\u5E01',
     tabUnits: '\uD83D\uDCD0 \u5355\u4F4D',
     tabHistory: '\uD83D\uDCCB \u5386\u53F2\u8BB0\u5F55',
-    tabCrypto: '\uD83D\uDE09 \u52A0\u5BC6\u8D27\u5E01',
+    tabCrypto: '\uD83E\uDE99 \u52A0\u5BC6\u8D27\u5E01',
     swapCrypto: '\u4EA4\u6362',
     cryptoLoading: '\u6B63\u5728\u52A0\u8F7D\u52A0\u5BC6\u8D27\u5E01\u4EF7\u683C\u2026',
     cryptoUpdated: '\u4EF7\u683C\u5DF2\u66F4\u65B0',
@@ -693,7 +695,7 @@ const TRANSLATIONS = {
     tabCurrency: '\uD83D\uDCB1 \u0639\u0645\u0644\u0627\u062A',
     tabUnits: '\uD83D\uDCD0 \u0648\u062D\u062F\u0627\u062A',
     tabHistory: '\uD83D\uDCCB \u0627\u0644\u0633\u062C\u0644',
-    tabCrypto: '\uD83D\uDE09 \u0639\u0645\u0644\u0627\u062A \u0631\u0642\u0645\u064A\u0629',
+    tabCrypto: '\uD83E\uDE99 \u0639\u0645\u0644\u0627\u062A \u0631\u0642\u0645\u064A\u0629',
     swapCrypto: '\u062A\u0628\u062F\u064A\u0644',
     cryptoLoading: '\u062C\u0627\u0631\u064D \u062A\u062D\u0645\u064A\u0644 \u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0639\u0645\u0644\u0627\u062A \u0627\u0644\u0631\u0642\u0645\u064A\u0629\u2026',
     cryptoUpdated: '\u062A\u0645 \u062A\u062D\u062F\u064A\u062B \u0627\u0644\u0623\u0633\u0639\u0627\u0631',
@@ -980,7 +982,7 @@ const TRANSLATIONS = {
     tabCurrency: '\uD83D\uDCB1 Валюта',
     tabUnits: '\uD83D\uDCD0 Единицы',
     tabHistory: '\uD83D\uDCCB История',
-    tabCrypto: '\uD83D\uDE09 Крипто',
+    tabCrypto: '\uD83E\uDE99 Крипто',
     swapCrypto: 'Поменять',
     cryptoLoading: 'Загрузка курсов криптовалют\u2026',
     cryptoUpdated: 'Курсы обновлены',
@@ -1439,7 +1441,9 @@ async function fetchRates() {
     if (Object.keys(rates).length === 0) rates = { ...FALLBACK_RATES };
   }
   populateCurrencySelects(Object.keys(rates).sort());
+  _skipHistory = true;
   convertCurrency();
+  _skipHistory = false;
 }
 
 function populateCurrencySelects(currencies) {
@@ -1478,7 +1482,7 @@ function convertCurrency() {
 
   const result = (amount / rates[from]) * rates[to];
   showResult($('c-result'), formatResult(result));
-  if (!lastCurrencyRecord || lastCurrencyRecord.from !== from || lastCurrencyRecord.to !== to || lastCurrencyRecord.amount !== amount) {
+  if (!_skipHistory && (!lastCurrencyRecord || lastCurrencyRecord.from !== from || lastCurrencyRecord.to !== to || lastCurrencyRecord.amount !== amount)) {
     addToHistory({ type: 'currency', from: from, to: to, amount: amount, result: result });
     lastCurrencyRecord = { from: from, to: to, amount: amount };
   }
@@ -1552,7 +1556,7 @@ function fetchCryptoPrices() {
     if (cached && cached.prices && cached.timestamp && Date.now() - cached.timestamp < CRYPTO_CACHE_TTL) {
       cryptoPrices = cached.prices;
       populateCryptoSelects();
-      convertCrypto();
+      _skipHistory = true; convertCrypto(); _skipHistory = false;
       if (status) status.textContent = TRANSLATIONS[currentLang].cryptoUpdated || 'Prices updated';
       return;
     }
@@ -1574,7 +1578,7 @@ function fetchCryptoPrices() {
       });
       localStorage.setItem(CRYPTO_CACHE_KEY, JSON.stringify({ prices: cryptoPrices, timestamp: Date.now() }));
       populateCryptoSelects();
-      convertCrypto();
+      _skipHistory = true; convertCrypto(); _skipHistory = false;
       if (status) status.textContent = TRANSLATIONS[currentLang].statusUpdated + new Date().toLocaleTimeString();
     })
     .catch(function () {
@@ -1585,13 +1589,13 @@ function fetchCryptoPrices() {
         if (cached && cached.prices) {
           cryptoPrices = cached.prices;
           populateCryptoSelects();
-          convertCrypto();
+          _skipHistory = true; convertCrypto(); _skipHistory = false;
           return;
         }
       } catch (e2) { /* ignore */ }
       cryptoPrices = { BTC: 45000, ETH: 3200, ADA: 0.45, SOL: 140, XRP: 0.62, USDT: 1, USDC: 1, DAI: 1 };
       populateCryptoSelects();
-      convertCrypto();
+      _skipHistory = true; convertCrypto(); _skipHistory = false;
     });
 }
 
@@ -1644,7 +1648,7 @@ function convertCrypto() {
 
   var result = (amount * fromInUsd) / toInUsd;
   showResult($('cr-result'), formatResult(result));
-  if (!lastCryptoRecord || lastCryptoRecord.from !== from || lastCryptoRecord.to !== to || lastCryptoRecord.amount !== amount) {
+  if (!_skipHistory && (!lastCryptoRecord || lastCryptoRecord.from !== from || lastCryptoRecord.to !== to || lastCryptoRecord.amount !== amount)) {
     addToHistory({ type: 'crypto', from: from, to: to, amount: amount, result: result });
     lastCryptoRecord = { from: from, to: to, amount: amount };
   }
@@ -1709,7 +1713,7 @@ function convertUnit() {
   }
 
   showResult($('u-result'), formatResult(result));
-  if (!lastUnitRecord || lastUnitRecord.category !== currentCategory || lastUnitRecord.from !== from || lastUnitRecord.to !== to || lastUnitRecord.amount !== amount) {
+  if (!_skipHistory && (!lastUnitRecord || lastUnitRecord.category !== currentCategory || lastUnitRecord.from !== from || lastUnitRecord.to !== to || lastUnitRecord.amount !== amount)) {
     addToHistory({ type: 'unit', category: currentCategory, from: from, to: to, amount: amount, result: result });
     lastUnitRecord = { category: currentCategory, from: from, to: to, amount: amount };
   }
@@ -1881,7 +1885,7 @@ function renderHistory() {
   }
 
   list.innerHTML = history.map(function (entry) {
-    var icon = entry.type === 'currency' ? '\uD83D\uDCB1' : entry.type === 'crypto' ? '\uD83D\uDE09' : '\uD83D\uDCD0';
+    var icon = entry.type === 'currency' ? '\uD83D\uDCB1' : entry.type === 'crypto' ? '\uD83E\uDE99' : '\uD83D\uDCD0';
     var fromLabel = entry.type === 'currency' || entry.type === 'crypto'
       ? entry.from
       : (t.units && t.units[entry.from]) || entry.from;
@@ -1988,7 +1992,7 @@ function switchTab(tab) {
   if (tab === 'currency' || tab === 'unit') updateFavStars();
   if (tab === 'crypto') {
     populateCryptoSelects();
-    convertCrypto();
+    _skipHistory = true; convertCrypto(); _skipHistory = false;
     // Lazy load crypto prices (only on first click)
     if (!DOM._cryptoFetched) {
       DOM._cryptoFetched = true;
@@ -2197,8 +2201,10 @@ function applyLanguage(lang) {
     if (document.getElementById('c-to')._updateSearchable) document.getElementById('c-to')._updateSearchable();
   }
 
+  _skipHistory = true;
   convertCurrency();
   convertUnit();
+  _skipHistory = false;
 
   // Re-theme button text in new language
   applyTheme();
@@ -2302,7 +2308,7 @@ document.addEventListener('keydown', function (e) {
   tabsEl.addEventListener('touchend', function (e) {
     var diff = e.changedTouches[0].clientX - startX;
     if (Math.abs(diff) < 50) return;
-    var tabs = ['currency', 'unit', 'history', 'crypto'];
+    var tabs = ['currency', 'unit', 'crypto', 'history'];
     var active = tabs.indexOf(document.querySelector('.tab.active').dataset.tab);
     var next = diff < 0 ? Math.min(active + 1, tabs.length - 1) : Math.max(active - 1, 0);
     if (next !== active) switchTab(tabs[next]);
@@ -2345,6 +2351,7 @@ function updateOfflineAge() {
 initLang();
 applyTheme();
 trimStorage();
+localStorage.removeItem(HISTORY_KEY);
 fetchRates();
 renderFavs();
 // Load previous rates from localStorage for rate change display

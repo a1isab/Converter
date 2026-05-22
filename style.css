@@ -247,7 +247,7 @@ header h1 .accent {
   background: transparent;
   cursor: pointer;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   font-family: var(--font-mono);
   color: var(--muted);
@@ -496,7 +496,7 @@ header h1 .accent {
     padding: 4px;
   }
   .tab {
-    font-size: 11px;
+    font-size: 13px;
     padding: 8px 6px;
   }
   .lang-links {
