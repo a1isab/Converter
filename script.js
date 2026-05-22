@@ -720,7 +720,7 @@ const FALLBACK_RATES = {
 async function fetchRates() {
   const status = document.getElementById('c-status');
   try {
-    const res = await fetch('https://api.frankfurter.app/latest?from=USD');
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
     if (!res.ok) throw new Error('Network response was not ok');
     const data = await res.json();
     rates = data.rates;
@@ -836,13 +836,7 @@ function convertUnit() {
     ? result.toExponential(4)
     : parseFloat(result.toFixed(6)).toString();
 
-  const t = TRANSLATIONS[currentLang].units;
-  const fromLabel = (t && t[from]) || UNITS[currentCategory][from].label;
-  const toLabel = (t && t[to]) || UNITS[currentCategory][to].label;
-
   document.getElementById('u-result').textContent = fmt;
-  document.getElementById('u-result-label').textContent =
-    `${amount} ${fromLabel} → ${toLabel}`;
 }
 
 function swapUnit() {

@@ -79,6 +79,8 @@ header h1 .accent {
   letter-spacing: 3px;
   text-transform: uppercase;
   margin-top: 4px;
+  white-space: nowrap;
+  min-height: 1.2em;
 }
 
 /* ===========================
@@ -109,7 +111,7 @@ header h1 .accent {
   display: none;
   position: absolute;
   top: 0;
-  right: 0;
+  inset-inline-end: 0;
   margin-top: 36px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -138,10 +140,11 @@ header h1 .accent {
   font-size: 13px;
   color: var(--text);
   white-space: nowrap;
+  min-width: 70px;
 }
 
 .settings-item select {
-  margin-left: auto;
+  margin-inline-start: auto;
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -155,14 +158,6 @@ header h1 .accent {
 .settings-item select:focus {
   outline: none;
   border-color: var(--accent);
-}
-
-/* ===========================
-   RTL SUPPORT
-=========================== */
-html[dir="rtl"] .settings-popup {
-  right: auto;
-  left: 0;
 }
 
 /* ===========================
@@ -190,6 +185,7 @@ html[dir="rtl"] .settings-popup {
   font-family: var(--font-mono);
   color: var(--muted);
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .tab.active {
@@ -231,6 +227,7 @@ html[dir="rtl"] .settings-popup {
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 6px;
+  white-space: nowrap;
 }
 
 .row {
@@ -334,7 +331,8 @@ html[dir="rtl"] .settings-popup {
   flex-shrink: 0;
 }
 
-#c-amount {
+#c-amount,
+#u-amount {
   width: 100%;
   padding: 11px 13px;
   background: var(--bg);
@@ -349,12 +347,34 @@ html[dir="rtl"] .settings-popup {
   transition: border-color 0.15s;
 }
 
-#c-amount:focus {
+#c-amount:focus,
+#u-amount:focus {
   border-color: var(--accent);
 }
 
-#c-amount::placeholder {
+#c-amount::placeholder,
+#u-amount::placeholder {
   color: var(--muted);
+}
+
+#u-from,
+#u-to {
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: var(--font-mono);
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+#u-from:focus,
+#u-to:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .conv-section select,
@@ -417,6 +437,7 @@ html[dir="rtl"] .settings-popup {
   letter-spacing: 0.5px;
   margin-top: auto;
   width: 100%;
+  min-height: 1.2em;
 }
 
 /* ===========================
@@ -425,7 +446,7 @@ html[dir="rtl"] .settings-popup {
 .cat-row {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .cat-btn {
@@ -438,6 +459,7 @@ html[dir="rtl"] .settings-popup {
   cursor: pointer;
   color: var(--muted);
   transition: all 0.15s;
+  white-space: nowrap;
 }
 
 .cat-btn.active {
@@ -492,7 +514,8 @@ html[dir="rtl"] .settings-popup {
 }
 
 .ss-arrow {
-  padding: 0 10px 0 4px;
+  padding-inline: 4px 10px;
+  padding-block: 0;
   color: var(--muted);
   font-size: 12px;
   pointer-events: none;
@@ -502,8 +525,7 @@ html[dir="rtl"] .settings-popup {
 .ss-dropdown {
   position: absolute;
   top: calc(100% + 4px);
-  left: 0;
-  right: 0;
+  inset-inline: 0;
   max-height: 250px;
   overflow-y: auto;
   background: var(--surface);
