@@ -29,6 +29,18 @@
               <option value="ar">&#1575;&#1604;&#1593;&#1585;&#1576;&#1610;&#1577;</option>
             </select>
           </div>
+          <div class="settings-item">
+            <span class="settings-icon">🔢</span>
+            <span data-i18n="settingsPrecision">Precision</span>
+            <select id="precision-select" onchange="setPrecision(this.value)">
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4" selected>4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="8">8</option>
+            </select>
+          </div>
         </div>
       </div>
     </header>
@@ -36,11 +48,14 @@
     <div class="tabs">
       <button class="tab active" data-tab="currency" onclick="switchTab('currency')" data-i18n="tabCurrency">💱 Currency</button>
       <button class="tab" data-tab="unit" onclick="switchTab('unit')" data-i18n="tabUnits">📐 Units</button>
+      <button class="tab" data-tab="history" onclick="switchTab('history')" data-i18n="tabHistory">📋 History</button>
+      <button class="tab" data-tab="crypto" onclick="switchTab('crypto')" data-i18n="tabCrypto">🪙 Crypto</button>
     </div>
 
     <!-- CURRENCY VIEW -->
     <div id="currency-view" class="view active">
       <div class="card">
+        <div class="fav-panel" id="fav-panel-c"></div>
         <div class="converter-layout">
           <div class="conv-section">
             <div class="field-group">
@@ -62,18 +77,26 @@
               <select id="c-to" onchange="convertCurrency()"></select>
               <div class="result-box">
                 <div class="result-num" id="c-result">—</div>
+                <button class="copy-btn" onclick="copyResult('c')" aria-label="Copy result" title="Copy">📋</button>
+                <button class="fav-btn" onclick="toggleFav(this)" data-fav="c" aria-label="Favorite" title="Favorite">☆</button>
               </div>
             </div>
           </div>
         </div>
 
+        <div class="rate-display" id="rate-display">
+          <span class="rate-line" id="rate-line"></span>
+          <span class="rate-change" id="rate-change"></span>
+        </div>
         <div class="status" id="c-status">Fetching live rates…</div>
+        <button class="refresh-btn" id="refresh-btn" onclick="manualRefreshRates()" data-i18n="refreshRates">↻ Refresh</button>
       </div>
     </div>
 
     <!-- UNIT VIEW -->
     <div id="unit-view" class="view">
       <div class="card">
+        <div class="fav-panel" id="fav-panel-u"></div>
         <div class="cat-row" id="cat-row"></div>
 
         <div class="converter-layout">
@@ -97,13 +120,61 @@
               <select id="u-to" onchange="convertUnit()"></select>
               <div class="result-box">
                 <div class="result-num" id="u-result">—</div>
+                <button class="copy-btn" onclick="copyResult('u')" aria-label="Copy result" title="Copy">📋</button>
+                <button class="fav-btn" onclick="toggleFav(this)" data-fav="u" aria-label="Favorite" title="Favorite">☆</button>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- CRYPTO VIEW -->
+    <div id="crypto-view" class="view">
+      <div class="card">
+        <div class="converter-layout">
+          <div class="conv-section">
+            <div class="field-group">
+              <label data-i18n="labelAmount">Amount</label>
+              <select id="cr-from" onchange="convertCrypto()"></select>
+              <input type="number" id="cr-amount" value="1" oninput="convertCrypto()" placeholder="0" />
+            </div>
+          </div>
+
+          <button class="swap-btn" onclick="swapCrypto()" title="Swap" data-i18n-title="swapCrypto">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 7H4m0 0l4-4m-4 4l4 4"/><path d="M8 17h12m0 0l-4-4m4 4l-4 4"/>
+            </svg>
+          </button>
+
+          <div class="conv-section">
+            <div class="field-group">
+              <label data-i18n="labelTo">To</label>
+              <select id="cr-to" onchange="convertCrypto()"></select>
+              <div class="result-box">
+                <div class="result-num" id="cr-result">—</div>
+                <button class="copy-btn" onclick="copyResult('cr')" aria-label="Copy result" title="Copy">📋</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="status" id="cr-status" data-i18n="cryptoLoading">Loading crypto prices…</div>
+      </div>
+    </div>
+
+    <!-- HISTORY VIEW -->
+    <div id="history-view" class="view">
+      <div class="card">
+        <div class="history-list" id="history-list">
+          <div class="history-empty" data-i18n="historyEmpty">No history yet</div>
+        </div>
+        <button class="clear-btn" onclick="clearHistory()" data-i18n="clearHistory">Clear History</button>
+      </div>
+    </div>
   </div>
+
+  <div class="toast" id="toast"></div>
 
   <script src="script.js"></script>
 </body>

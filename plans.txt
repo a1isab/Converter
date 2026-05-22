@@ -1,0 +1,455 @@
+Feature: Add six new unit conversion categories
+
+Requirements:
+1. Add Volume conversions: liters, milliliters, gallons (US), gallons (UK), cubic meters, cubic feet, cups, tablespoons, teaspoons
+2. Add Area conversions: square meters, square kilometers, square miles, acres, square feet, square inches, hectares
+3. Add Time conversions: seconds, minutes, hours, days, weeks, months, years
+4. Add Energy conversions: joules, kilojoules, calories, kilocalories, watt-hours, kilowatt-hours, BTU, foot-pounds
+5. Add Pressure conversions: pascals, kilopascals, bars, millibars, psi, atmospheres
+6. Add Data Storage conversions: bytes, kilobytes, megabytes, gigabytes, terabytes, petabytes (with binary 1024 and decimal 1000 options)
+
+Current structure (script.js):
+const UNITS = {
+  length: {
+    meter: { label: 'Meter (m)', f: 1 },
+    kilometer: { label: 'Kilometer (km)', f: 1000 },
+    // ... more length units
+  },
+  mass: { /* mass units */ },
+  temperature: { /* temperature units */ },
+  speed: { /* speed units */ }
+};
+
+Provide:
+1. Complete UNITS object additions with all six categories
+2. Accurate conversion factors (base unit = 1)
+3. Translation keys for all categories in three languages (en, zh, ar)
+4. Category labels matching existing translation structure
+5. Any special handling needed (e.g., temperature conversions)
+
+Make sure conversion factors are accurate and each category has a base unit with f: 1
+Feature: Add conversion history tracking and display
+
+Requirements:
+1. Store the last 10 conversions (configurable limit)
+2. Create new "History" tab alongside "Currency" and "Units"
+3. Each history entry tracks: type (currency/unit), from, to, amount, result, timestamp
+4. Show timestamps in human-readable format (e.g., "2 hours ago", "Just now")
+5. Each entry has a "Quick Convert Again" button that refills the form
+6. Clear History button at bottom
+7. Show "No history yet" message when empty
+8. Use localStorage['conversionHistory'] for persistence
+
+Data structure:
+{
+  type: 'currency' | 'unit',
+  from: 'USD',
+  to: 'EUR',
+  category: 'length', // only for unit conversions
+  amount: 100,
+  result: 86.12,
+  timestamp: 1705423200000
+}
+
+Provide:
+1. addToHistory(entry) function - adds entry, keeps only last 10
+2. getHistory() function - returns array of entries
+3. clearHistory() function - empties localStorage
+4. formatTimestamp(ms) function - returns "2 hours ago" style text
+5. HTML structure for #history-view (use existing card and list styling)
+6. JavaScript to populate history view and handle quick-convert buttons
+7. CSS if needed to style history list
+
+Integration points:
+- convertCurrency() should call addToHistory() after each conversion
+- convertUnit() should call addToHistory() after each conversion
+- Add tab button: <button class="tab" data-tab="history" onclick="switchTab('history')">📋 History</button>
+Feature: Add favorites/bookmarks for frequently used conversions
+
+Requirements:
+1. Star icon on each conversion to favorite it
+2. Favorites stored in localStorage['conversionFavorites']
+3. Quick-access panel at top of Currency and Units views
+4. Panel shows up to 6 favorites (scrollable if more)
+5. Each favorite shows: "USD → EUR", "meter ⟷ foot" etc.
+6. Click favorite button to auto-fill the conversion form
+7. Click star icon again to remove from favorites
+8. Click favorite quick-button clears history on click (optional)
+9. Favorites persist across sessions
+
+Data structure:
+[
+  {
+    type: 'currency',
+    from: 'USD',
+    to: 'EUR'
+  },
+  {
+    type: 'unit',
+    category: 'length',
+    from: 'meter',
+    to: 'foot'
+  }
+]
+
+Provide:
+1. toggleFavorite(type, from, to, category?) function
+2. isFavorited(type, from, to, category?) function
+3. getFavorites() function
+4. HTML structure for favorites panel (scrollable, 6 per view)
+5. CSS for favorite buttons and star styling
+6. JavaScript to:
+   - Display favorites in both currency and unit views
+   - Handle favorite button clicks (auto-fill form)
+   - Handle star toggle
+   - Build favorite display labels ("USD → EUR")
+7. Store in localStorage['conversionFavorites'] as JSON
+
+The star button should be near the swap button with same styling.
+Favorites panel should appear before the converter layout in both views.
+
+Feature: Add decimal precision control and copy-to-clipboard
+
+Requirements:
+1. Add dropdown to settings-popup for decimal places: 2, 3, 4, 5, 6, 8 (default 4)
+2. Toggle for scientific notation (for numbers > 1e10 or < 1e-10)
+3. Copy button next to both #c-result and #u-result
+4. Show toast notification "Copied!" when result is copied
+5. Store precision preference in localStorage['precision'] (default: 4)
+6. Apply formatting to all conversion results immediately
+7. Copy includes the value formatted according to current precision
+
+Provide:
+1. formatResult(number, precision, useScientific) function
+2. copyToClipboard(text) function
+3. showCopyNotification(message, duration) function
+4. Updated convertCurrency() to use formatResult()
+5. Updated convertUnit() to use formatResult()
+6. HTML for settings dropdown (insert into .settings-popup)
+7. HTML for copy buttons (insert into .result-box elements)
+8. CSS for toast notification animation (slide in from bottom-right, fade out)
+9. Event listeners for precision select and copy buttons
+
+Settings dropdown should:
+- Show options: 2, 3, 4, 5, 6, 8
+- Update localStorage['precision'] on change
+- Re-calculate and re-display current results
+
+Copy button should:
+- Only show if there's a valid result (not "—" or "Select units")
+- Copy the formatted result number to clipboard
+- Show toast "Copied to clipboard!" for 2 seconds
+
+Toast notification style:
+- Position: bottom-right corner
+- Background: var(--accent) with dark text
+- Animation: slide in 0.3s, stay 2s, fade out 0.3s
+
+Feature: Enhance currency rate display with rate change and refresh controls
+
+Requirements:
+1. Show actual exchange rate below result (e.g., "1 USD = 0.8612 EUR")
+2. Display rate change from previous day with indicator (↑ +2.3% or ↓ -1.1%)
+3. Add manual Refresh Rates button with 60-second cooldown timer
+4. Show countdown to next allowed refresh
+5. Cache previous rates to calculate daily change
+6. Update status message with rate change indicator
+7. Auto-refresh rates on app load as before
+
+Data to track (localStorage):
+- Current rates (already have: rates object)
+- Previous rates with timestamp
+- Last fetch timestamp
+- Last refresh attempt timestamp
+
+Provide:
+1. Enhanced fetchRates() function that:
+   - Stores previous rates before fetching new ones
+   - Calculates rate change percentage
+   - Handles offline fallback as before
+
+2. calculateRateChange(fromRate, toRate) function
+   - Returns: { percentage: 2.3, direction: 'up' }
+
+3. formatRateDisplay(amount, fromCode, toCode, rate) function
+   - Returns: "1 USD = 0.8612 EUR"
+
+4. manualRefreshRates() function with:
+   - Cooldown check (60 seconds minimum between refreshes)
+   - Loading indicator while fetching
+   - Error handling
+
+5. startRefreshCountdown(secondsRemaining) function
+   - Updates button text with countdown
+
+6. HTML for rate display area:
+   - Below the result-box
+   - Shows formatted rate (1 USD = 0.8612 EUR)
+   - Shows change indicator (↑ +2.3% or ↓ -1.1%)
+   - Manual refresh button with cooldown timer
+
+7. CSS for:
+   - Rate display box styling
+   - Up/down indicator colors (green/red)
+   - Refresh button with disabled state
+   - Cooldown timer display
+
+8. Integration:
+   - Update convertCurrency() to show rate display
+   - Store previous rates in localStorage['previousRates']
+   - Call on app initialization
+
+   Feature: Add three new converter types - Cryptocurrency, Cooking, Data Storage
+
+Requirements:
+
+1. CRYPTOCURRENCY TAB:
+   - New tab: "🪙 Crypto"
+   - Currencies: BTC, ETH, ADA, SOL, XRP, USDT, USDC, DAI
+   - Fetch from CoinGecko API (free, no authentication)
+   - Display: "1 BTC = $45,230.50" with current price
+   - Convert between crypto and USD
+   - Also show conversion to other major currencies (EUR, GBP, JPY, CNY)
+   - Cache prices for 5 minutes (localStorage)
+
+2. COOKING MEASUREMENTS TAB:
+   - New tab: "👨‍🍳 Cooking"
+   - Categories: Weight, Volume
+   - Weight units: grams (g), ounces (oz), pounds (lb)
+   - Volume units: milliliters (mL), liters (L), cups, tablespoons (tbsp), teaspoons (tsp)
+   - Standard conversion factors (no special handling needed)
+   - No API calls needed (static data)
+
+3. DATA STORAGE TAB:
+   - New tab: "💾 Data"
+   - Units: bit, byte, kilobyte, megabyte, gigabyte, terabyte, petabyte, exabyte
+   - Support BOTH binary (1 KB = 1024 bytes) and decimal (1 KB = 1000 bytes)
+   - Toggle dropdown: "Binary (1024)" vs "Decimal (1000)"
+   - Each category calculates conversions differently based on selected mode
+
+Provide:
+1. HTML for three new tabs and views (#crypto-view, #cooking-view, #data-view)
+   - Each tab has same layout as currency/unit views
+   - Swap buttons, input/output fields, category buttons (for cooking)
+
+2. JavaScript:
+   - fetchCryptoPrices() function using CoinGecko API
+   - convertCrypto() function
+   - convertCooking() function
+   - convertData() function (with binary/decimal toggle)
+   - Price caching in localStorage
+
+3. Data structures:
+   - Crypto: { BTC: { label: 'Bitcoin', price: 45230.50 } }
+   - Cooking: Same UNITS structure with categories
+   - Data: UNITS with binary and decimal conversion options
+
+4. API endpoint (free, no auth):
+   - https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,cardano,solana,ripple,tether,usd-coin,dai&vs_currencies=usd,eur,gbp,jpy,cny
+
+5. Error handling:
+   - Fallback prices if API fails
+   - Show "Loading prices..." while fetching
+   - Cache prices for 5 minutes before refetching
+
+6. CSS: Extend existing styles for new views
+
+7. Category buttons for Cooking (Weight, Volume) - same pattern as Units
+Feature: Add dark/light mode toggle, keyboard shortcuts, mobile gestures, animations
+
+Requirements:
+
+1. DARK/LIGHT MODE:
+   - Toggle button in settings (sun/moon icon)
+   - Store preference in localStorage['theme']
+   - Respect system preference on first visit (prefers-color-scheme)
+   - Smooth transition between modes (0.3s)
+   - Light mode colors:
+     * --bg: #f5f5f5
+     * --surface: #ffffff
+     * --border: #e0e0e0
+     * --text: #1a1a1a
+     * --accent: #c8f060 (keep same)
+     * --muted: #666666
+     * --subtle: #999999
+
+2. KEYBOARD SHORTCUTS:
+   - Ctrl/Cmd + Shift + X: Swap (currencies or units)
+   - Ctrl/Cmd + C (when result focused): Copy result
+   - ArrowUp/ArrowDown: Switch between tabs
+   - Enter (in amount field): Focus result
+   - ? key: Show shortcuts help modal
+   - Escape: Close any open dialogs/modals
+
+3. MOBILE GESTURES:
+   - Swipe left/right between tabs (50px threshold)
+   - Touch feedback on buttons (scale, opacity)
+   - Long-press settings button (optional): show tooltip
+
+4. ANIMATIONS & EFFECTS:
+   - Loading skeleton for rate updates (pulsing placeholder)
+   - Smooth slide-in for tabs/views
+   - Button hover effects
+   - Result update animation (fade-in)
+   - Modal slide-down animation for help dialog
+
+5. ADDITIONAL UX:
+   - "Reset" button to clear all fields
+   - Smooth scrolling behavior
+   - Loading indicator while fetching rates
+   - Focus visible rings for keyboard users
+
+Provide:
+1. Light mode CSS variables in :root
+2. Theme toggle button HTML + JavaScript
+3. toggleTheme(theme) function
+4. Keyboard event handler function for all shortcuts
+5. Touch event handlers for swipe gestures (swipeDetector)
+6. Help modal HTML with shortcuts list
+7. Loading skeleton HTML and CSS animation
+8. Reset button functionality
+9. Animation keyframes (CSS)
+10. Prefers-color-scheme detection code
+
+CSS animations needed:
+- @keyframes pulse (for loading skeleton)
+- @keyframes slideIn (for tabs/views)
+- @keyframes fadeIn (for results)
+- Smooth transitions on all interactive elements
+Feature: Add shareable links, CSV export, and conversion tables
+
+Requirements:
+
+1. SHAREABLE LINKS:
+   - Format: https://yoursite.com?type=currency&from=USD&to=EUR&amount=100
+   - On page load, parse URL parameters and auto-fill form
+   - Share button copies full URL to clipboard
+   - Works for both currency and unit conversions
+   - Unit link format: ?type=unit&category=length&from=meter&to=foot&amount=5
+
+2. EXPORT HISTORY AS CSV:
+   - Button in History tab: "📥 Export as CSV"
+   - Format:
+     Type,From,To,Amount,Result,Timestamp
+     Currency,USD,EUR,100,86.12,"2024-01-15 14:30:00"
+     Unit,meter,foot,5,16.40,"2024-01-15 14:15:00"
+   - File: converter_history_[YYYY-MM-DD].csv
+   - Trigger download in browser
+
+3. CONVERSION RATE TABLE / PRINT VIEW:
+   - Button: "Print Rates" in currency view
+   - Generate HTML table of 1 unit/USD to all other major currencies
+   - Or: All major currencies to all other major currencies (matrix)
+   - Include print stylesheet (@media print)
+   - "Print" button opens browser print dialog
+
+Provide:
+1. parseURLParams() function
+2. buildShareURL(type, from, to, amount, category?) function
+3. copyShareLink() function
+4. historyToCSV(history) function
+5. downloadFile(filename, content, mimeType) function
+6. generateConversionTable(type, data) function
+7. Print stylesheet in CSS (@media print)
+8. HTML:
+   - Share button (insert near results)
+   - Export CSV button (in history view)
+   - Print rates button (in currency view)
+9. On page load: call parseURLParams() to auto-fill form if URL params exist
+
+Auto-fill logic:
+- If URL has ?type=currency&from=USD&to=EUR&amount=100
+  * Switch to Currency tab
+  * Set from currency to USD
+  * Set to currency to EUR
+  * Set amount to 100
+  * Trigger convertCurrency()
+
+CSV format requirements:
+- Use double quotes for timestamps
+- Escape commas in values
+- Include header row
+- ISO date format: YYYY-MM-DD HH:mm:ss
+Feature: Improve accessibility for screen readers and keyboard users
+
+Requirements:
+
+1. ARIA LABELS & DESCRIPTIONS:
+   - aria-label on: all buttons, tab buttons, select dropdowns
+   - aria-live="polite" on result areas (#c-result, #u-result)
+   - aria-describedby for complex elements
+   - aria-label on settings button, swap buttons, copy buttons
+   - role attributes where needed
+
+2. SCREEN READER ANNOUNCEMENTS:
+   - Announce conversion result immediately after calculation
+   - Announce "Rates updated at [time]" when rates refresh
+   - Announce when switching tabs ("Currency tab activated")
+   - Announce errors ("Please select both currencies")
+   - Announce copy success ("Conversion result copied to clipboard")
+
+3. KEYBOARD NAVIGATION:
+   - All interactive elements must be keyboard accessible (tabindex)
+   - Logical tab order (left to right, top to bottom)
+   - Focus ring visible on all elements
+   - Modals have focus trap (Tab stays within modal)
+   - Skip to content link at top of page
+
+4. COLOR CONTRAST:
+   - Text must be WCAG AA compliant (4.5:1 ratio)
+   - Dark mode: light text on dark background ✓
+   - Light mode: dark text on light background ✓
+   - Accent color (#c8f060) on dark background: check contrast
+   - Don't rely on color alone for status (use icons + text)
+
+5. FORM LABELS:
+   - Associate all inputs with <label> using htmlFor attribute
+   - Placeholder text is NOT a label (supplemental only)
+   - Input type="number" (good) but handle screen readers
+   - Error messages announced clearly
+
+6. SEMANTIC HTML:
+   - Use <nav> for navigation (tab buttons)
+   - Use <label> for form labels
+   - Use <button> for buttons (not <div>)
+   - Use <select> for dropdowns
+   - Proper heading hierarchy (h1, h2)
+   - Use <main> wrapper for main content
+
+Provide:
+1. Updated index.html with:
+   - aria-label attributes
+   - aria-live regions
+   - aria-describedby attributes
+   - Skip link
+   - Semantic HTML improvements
+   - <label> tags for inputs
+
+2. JavaScript functions:
+   - announceResult(text) - uses aria-live to announce to screen readers
+   - announceMessage(message) - generic announcement function
+
+3. CSS:
+   - Focus styles (visible focus rings)
+   - Updated for WCAG AA contrast compliance
+   - Print: focus styles optional
+
+4. Keyboard event handlers:
+   - Tab order logic
+   - Focus management in modals
+   - Focus visible styles
+
+5. Contrast checker:
+   - Report WCAG AA compliance for all color combinations
+   - Suggest adjustments if needed
+
+Example aria-labels:
+- aria-label="Swap currencies" on swap button
+- aria-label="From currency" on c-from select
+- aria-label="To currency" on c-to select
+- aria-label="Conversion amount" on c-amount input
+
+Screen reader announcements:
+- "100 USD equals 86.12 EUR"
+- "Currency tab activated"
+- "Conversion copied to clipboard"
