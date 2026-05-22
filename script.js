@@ -1057,6 +1057,9 @@ function applyLanguage(lang) {
   // Update language select to match
   var langSelect = document.getElementById('lang-select');
   if (langSelect) langSelect.value = lang;
+
+  // Close settings popup after language change
+  document.getElementById('settings-popup').classList.remove('open');
 }
 
 // ===========================
