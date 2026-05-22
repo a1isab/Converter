@@ -1969,10 +1969,10 @@ function applyLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('lang', lang);
 
-  // Update URL path (only if not already correct)
-  var expected = '/' + lang;
-  if (window.location.pathname !== expected) {
-    history.pushState(null, '', expected);
+  // Sync URL hash (use replaceState to avoid extra history entries)
+  var expected = '#/' + lang;
+  if (window.location.hash !== expected) {
+    history.replaceState(null, '', expected);
   }
 
   // Update static text via data-i18n
@@ -2019,47 +2019,39 @@ function applyLanguage(lang) {
 }
 
 // ===========================
-// ROUTING
+// ROUTING (hash-based)
 // ===========================
-function getLangFromPath() {
-  var path = window.location.pathname;
-  var m = path.match(/^\/(en|zh|ar|ru)(\/|$)/);
+function getLangFromHash() {
+  var hash = window.location.hash;
+  var m = hash.match(/^#?\/(en|zh|ar|ru)(\/|$)/);
   return m ? m[1] : null;
 }
 
 function initLang() {
-  var pathLang = getLangFromPath();
-  if (pathLang) {
-    applyLanguage(pathLang);
+  var hashLang = getLangFromHash();
+  if (hashLang) {
+    applyLanguage(hashLang);
     return;
   }
-  // Root '/' — detect and redirect
+  // No hash — detect and redirect (replace current history entry)
   var detected = localStorage.getItem('lang') || (navigator.language || '').slice(0, 2);
   if (!SUPPORTED_LANGS.includes(detected)) detected = 'en';
-  window.location.replace('/' + detected);
+  history.replaceState(null, '', '#/' + detected);
+  applyLanguage(detected);
 }
 
-// Handle back/forward navigation
-window.addEventListener('popstate', function () {
-  var pl = getLangFromPath();
-  if (!pl) {
-    // Landed on '/' — redirect to detected language
-    var detected = localStorage.getItem('lang') || (navigator.language || '').slice(0, 2);
-    if (!SUPPORTED_LANGS.includes(detected)) detected = 'en';
-    window.location.replace('/' + detected);
-    return;
-  }
-  if (pl !== currentLang) applyLanguage(pl);
+// Handle hash changes (link clicks, back/forward)
+window.addEventListener('hashchange', function () {
+  var hl = getLangFromHash();
+  if (hl && hl !== currentLang) applyLanguage(hl);
 });
 
 // Global click handler — language links + popup close
 document.addEventListener('click', function (e) {
-  // Language switcher links
   var link = e.target.closest('.lang-link');
   if (link) {
     e.preventDefault();
-    history.pushState(null, '', '/' + link.dataset.lang);
-    applyLanguage(link.dataset.lang);
+    location.hash = link.getAttribute('href');
     return;
   }
   // Close settings popup when clicking outside
