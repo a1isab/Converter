@@ -3,6 +3,7 @@
 // ===========================
 let rates = {};
 let currentCategory = 'length';
+const SUPPORTED_LANGS = ['en', 'zh', 'ar', 'ru'];
 let currentLang = localStorage.getItem('lang') || 'en';
 let precision = parseInt(localStorage.getItem('precision') || '4');
 const HISTORY_KEY = 'conversionHistory';
@@ -849,6 +850,281 @@ const TRANSLATIONS = {
       terabyte: '\u062A\u064A\u0631\u0627\u0628\u0627\u064A\u062A (TB)',
       petabyte: '\u0628\u064A\u062A\u0627\u0628\u0627\u064A\u062A (PB)'
     }
+  },
+  ru: {
+    headerText: 'КОНВ',
+    headerAccent: 'ЕРТ',
+    tagline: 'Валюта и единицы',
+    tabCurrency: '\uD83D\uDCB1 Валюта',
+    tabUnits: '\uD83D\uDCD0 Единицы',
+    tabHistory: '\uD83D\uDCCB История',
+    tabCrypto: '\uD83D\uDE09 Крипто',
+    swapCrypto: 'Поменять',
+    cryptoLoading: 'Загрузка курсов криптовалют\u2026',
+    cryptoUpdated: 'Курсы обновлены',
+    cryptoOffline: 'Курсы криптовалют недоступны',
+    favEmpty: '\u2606 Избранное',
+    historyEmpty: 'История пуста',
+    clearHistory: 'Очистить историю',
+    labelAmount: 'Сумма',
+    labelTo: 'В',
+    swapCurrencies: 'Поменять валюты',
+    swapUnits: 'Поменять единицы',
+    statusDefault: 'Получение курсов\u2026',
+    resultCurrency: 'Выберите валюты',
+    resultUnits: 'Выберите единицы',
+    searchPlaceholder: 'Поиск валюты\u2026',
+    noResults: 'Нет результатов',
+    statusOffline: 'Офлайн \u2014 используются резервные курсы.',
+    statusUpdated: 'Курсы обновлены: ',
+    settingsLanguage: 'Язык',
+    settingsPrecision: 'Точность',
+    copiedText: 'Скопировано в буфер обмена!',
+    refreshRates: '\u21BB Обновить',
+    refreshing: 'Обновление...',
+    categories: {
+      length: 'Длина',
+      mass: 'Масса',
+      temperature: 'Температура',
+      speed: 'Скорость',
+      volume: 'Объём',
+      area: 'Площадь',
+      time: 'Время',
+      energy: 'Энергия',
+      pressure: 'Давление',
+      data: 'Хранение данных'
+    },
+    currencyNames: {
+      USD: 'Доллар США',
+      AED: 'Дирхам ОАЭ',
+      AFN: 'Афганский афгани',
+      ALL: 'Албанский лек',
+      AMD: 'Армянский драм',
+      ANG: 'Нидерландский антильский гульден',
+      AOA: 'Ангольская кванза',
+      ARS: 'Аргентинское песо',
+      AUD: 'Австралийский доллар',
+      AWG: 'Арубанский флорин',
+      AZN: 'Азербайджанский манат',
+      BAM: 'Конвертируемая марка Боснии и Герцеговины',
+      BBD: 'Барбадосский доллар',
+      BDT: 'Бангладешская така',
+      BGN: 'Болгарский лев',
+      BHD: 'Бахрейнский динар',
+      BIF: 'Бурундийский франк',
+      BMD: 'Бермудский доллар',
+      BND: 'Брунейский доллар',
+      BOB: 'Боливийский боливиано',
+      BRL: 'Бразильский реал',
+      BSD: 'Багамский доллар',
+      BTN: 'Бутанский нгултрум',
+      BWP: 'Ботсванская пула',
+      BYN: 'Белорусский рубль',
+      BZD: 'Белизский доллар',
+      CAD: 'Канадский доллар',
+      CDF: 'Конголезский франк',
+      CHF: 'Швейцарский франк',
+      CLF: 'Чилийская расчетная единица',
+      CLP: 'Чилийское песо',
+      CNH: 'Китайский юань (офшор)',
+      CNY: 'Китайский юань',
+      COP: 'Колумбийское песо',
+      CRC: 'Коста-риканский колон',
+      CUP: 'Кубинское песо',
+      CVE: 'Эскудо Кабо-Верде',
+      CZK: 'Чешская крона',
+      DJF: 'Джибутийский франк',
+      DKK: 'Датская крона',
+      DOP: 'Доминиканское песо',
+      DZD: 'Алжирский динар',
+      EGP: 'Египетский фунт',
+      ERN: 'Эритрейская накфа',
+      ETB: 'Эфиопский быр',
+      EUR: 'Евро',
+      FJD: 'Фиджийский доллар',
+      FKP: 'Фунт Фолклендских островов',
+      FOK: 'Фарерская крона',
+      GBP: 'Британский фунт',
+      GEL: 'Грузинский лари',
+      GGP: 'Фунт Гернси',
+      GHS: 'Ганский седи',
+      GIP: 'Гибралтарский фунт',
+      GMD: 'Гамбийский даласи',
+      GNF: 'Гвинейский франк',
+      GTQ: 'Гватемальский кетсаль',
+      GYD: 'Гайанский доллар',
+      HKD: 'Гонконгский доллар',
+      HNL: 'Гондурасская лемпира',
+      HRK: 'Хорватская куна',
+      HTG: 'Гаитянский гурд',
+      HUF: 'Венгерский форинт',
+      IDR: 'Индонезийская рупия',
+      ILS: 'Израильский шекель',
+      IMP: 'Фунт острова Мэн',
+      INR: 'Индийская рупия',
+      IQD: 'Иракский динар',
+      IRR: 'Иранский риал',
+      ISK: 'Исландская крона',
+      JEP: 'Фунт Джерси',
+      JMD: 'Ямайский доллар',
+      JOD: 'Иорданский динар',
+      JPY: 'Японская иена',
+      KES: 'Кенийский шиллинг',
+      KGS: 'Киргизский сом',
+      KHR: 'Камбоджийский риель',
+      KID: 'Доллар Кирибати',
+      KMF: 'Коморский франк',
+      KRW: 'Южнокорейская вона',
+      KWD: 'Кувейтский динар',
+      KYD: 'Доллар Каймановых островов',
+      KZT: 'Казахстанский тенге',
+      LAK: 'Лаосский кип',
+      LBP: 'Ливанский фунт',
+      LKR: 'Шри-ланкийская рупия',
+      LRD: 'Либерийский доллар',
+      LSL: 'Лоти Лесото',
+      LYD: 'Ливийский динар',
+      MAD: 'Марокканский дирхам',
+      MDL: 'Молдавский лей',
+      MGA: 'Малагасийский ариари',
+      MKD: 'Македонский денар',
+      MMK: 'Мьянманский кьят',
+      MNT: 'Монгольский тугрик',
+      MOP: 'Патака Макао',
+      MRU: 'Мавританская угия',
+      MUR: 'Маврикийская рупия',
+      MVR: 'Мальдивская руфия',
+      MWK: 'Малавийская квача',
+      MXN: 'Мексиканское песо',
+      MYR: 'Малайзийский ринггит',
+      MZN: 'Мозамбикский метикал',
+      NAD: 'Намибийский доллар',
+      NGN: 'Нигерийская найра',
+      NIO: 'Никарагуанская кордоба',
+      NOK: 'Норвежская крона',
+      NPR: 'Непальская рупия',
+      NZD: 'Новозеландский доллар',
+      OMR: 'Оманский риал',
+      PAB: 'Панамский бальбоа',
+      PEN: 'Перуанский соль',
+      PGK: 'Кина Папуа-Новой Гвинеи',
+      PHP: 'Филиппинское песо',
+      PKR: 'Пакистанская рупия',
+      PLN: 'Польский злотый',
+      PYG: 'Парагвайский гуарани',
+      QAR: 'Катарский риал',
+      RON: 'Румынский лей',
+      RSD: 'Сербский динар',
+      RUB: 'Российский рубль',
+      RWF: 'Руандийский франк',
+      SAR: 'Саудовский риал',
+      SBD: 'Доллар Соломоновых Островов',
+      SCR: 'Сейшельская рупия',
+      SDG: 'Суданский фунт',
+      SEK: 'Шведская крона',
+      SGD: 'Сингапурский доллар',
+      SHP: 'Фунт Святой Елены',
+      SLE: 'Леоне Сьерра-Леоне',
+      SLL: 'Леоне Сьерра-Леоне',
+      SOS: 'Сомалийский шиллинг',
+      SRD: 'Суринамский доллар',
+      SSP: 'Южносуданский фунт',
+      STN: 'Добра Сан-Томе и Принсипи',
+      SYP: 'Сирийский фунт',
+      SZL: 'Свазилендский лилангени',
+      THB: 'Тайский бат',
+      TJS: 'Таджикский сомони',
+      TMT: 'Туркменский манат',
+      TND: 'Тунисский динар',
+      TOP: 'Тонганская паанга',
+      TRY: 'Турецкая лира',
+      TTD: 'Доллар Тринидада и Тобаго',
+      TVD: 'Доллар Тувалу',
+      TWD: 'Новый тайваньский доллар',
+      TZS: 'Танзанийский шиллинг',
+      UAH: 'Украинская гривна',
+      UGX: 'Угандийский шиллинг',
+      UYU: 'Уругвайское песо',
+      UZS: 'Узбекский сум',
+      VES: 'Венесуэльский боливар',
+      VND: 'Вьетнамский донг',
+      VUV: 'Вануатский вату',
+      WST: 'Самоанская тала',
+      XAF: 'Центральноафриканский франк КФА',
+      XCD: 'Восточно-карибский доллар',
+      XCG: 'Карибский гульден',
+      XDR: 'Специальные права заимствования',
+      XOF: 'Западноафриканский франк КФА',
+      XPF: 'Французский тихоокеанский франк',
+      YER: 'Йеменский риал',
+      ZAR: 'Южноафриканский рэнд',
+      ZMW: 'Замбийская квача',
+      ZWG: 'Зимбабвийское золото',
+      ZWL: 'Зимбабвийский доллар'
+    },
+    units: {
+      meter: 'Метр (m)',
+      kilometer: 'Километр (km)',
+      centimeter: 'Сантиметр (cm)',
+      mile: 'Миля (mi)',
+      yard: 'Ярд (yd)',
+      foot: 'Фут (ft)',
+      inch: 'Дюйм (in)',
+      kilogram: 'Килограмм (kg)',
+      gram: 'Грамм (g)',
+      pound: 'Фунт (lb)',
+      ounce: 'Унция (oz)',
+      celsius: 'Цельсий (°C)',
+      fahrenheit: 'Фаренгейт (°F)',
+      kelvin: 'Кельвин (K)',
+      mps: 'м/с',
+      kph: 'км/ч',
+      mph: 'миль/ч',
+      knot: 'Узел',
+      liter: 'Литр (L)',
+      milliliter: 'Миллилитр (mL)',
+      gallon_us: 'Галлон (US)',
+      gallon_uk: 'Галлон (UK)',
+      cubic_meter: 'Кубический метр (m³)',
+      cubic_foot: 'Кубический фут (ft³)',
+      cup: 'Чашка',
+      tablespoon: 'Столовая ложка (tbsp)',
+      teaspoon: 'Чайная ложка (tsp)',
+      square_meter: 'Квадратный метр (m²)',
+      square_kilometer: 'Квадратный километр (km²)',
+      square_mile: 'Квадратная миля (mi²)',
+      acre: 'Акр',
+      square_foot: 'Квадратный фут (ft²)',
+      square_inch: 'Квадратный дюйм (in²)',
+      hectare: 'Гектар (ha)',
+      second: 'Секунда (s)',
+      minute: 'Минута (min)',
+      hour: 'Час (h)',
+      day: 'День (d)',
+      week: 'Неделя (wk)',
+      month: 'Месяц (mo)',
+      year: 'Год (yr)',
+      joule: 'Джоуль (J)',
+      kilojoule: 'Килоджоуль (kJ)',
+      calorie: 'Калория (cal)',
+      kilocalorie: 'Килокалория (kcal)',
+      watt_hour: 'Ватт-час (Wh)',
+      kilowatt_hour: 'Киловатт-час (kWh)',
+      btu: 'BTU',
+      foot_pound: 'Фут-фунт (ft·lb)',
+      pascal: 'Паскаль (Pa)',
+      kilopascal: 'Килопаскаль (kPa)',
+      bar: 'Бар',
+      millibar: 'Миллибар (mbar)',
+      psi: 'PSI',
+      atmosphere: 'Атмосфера (atm)',
+      byte: 'Байт (B)',
+      kilobyte: 'Килобайт (KB)',
+      megabyte: 'Мегабайт (MB)',
+      gigabyte: 'Гигабайт (GB)',
+      terabyte: 'Терабайт (TB)',
+      petabyte: 'Петабайт (PB)'
+    }
   }
 };
 
@@ -1693,6 +1969,12 @@ function applyLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('lang', lang);
 
+  // Update URL path (only if not already correct)
+  var expected = '/' + lang;
+  if (window.location.pathname !== expected) {
+    history.pushState(null, '', expected);
+  }
+
   // Update static text via data-i18n
   document.querySelectorAll('[data-i18n]').forEach(function (el) {
     el.textContent = TRANSLATIONS[lang][el.dataset.i18n];
@@ -1726,9 +2008,10 @@ function applyLanguage(lang) {
   convertCurrency();
   convertUnit();
 
-  // Update language select to match
-  var langSelect = document.getElementById('lang-select');
-  if (langSelect) langSelect.value = lang;
+  // Highlight active language link
+  document.querySelectorAll('.lang-link').forEach(function (el) {
+    el.classList.toggle('active', el.dataset.lang === lang);
+  });
 
   // Close settings popup after language change
   document.getElementById('settings-popup').classList.remove('open');
@@ -1736,9 +2019,50 @@ function applyLanguage(lang) {
 }
 
 // ===========================
-// INIT
+// ROUTING
 // ===========================
+function getLangFromPath() {
+  var path = window.location.pathname;
+  var m = path.match(/^\/(en|zh|ar|ru)(\/|$)/);
+  return m ? m[1] : null;
+}
+
+function initLang() {
+  var pathLang = getLangFromPath();
+  if (pathLang) {
+    applyLanguage(pathLang);
+    return;
+  }
+  // Root '/' — detect and redirect
+  var detected = localStorage.getItem('lang') || (navigator.language || '').slice(0, 2);
+  if (!SUPPORTED_LANGS.includes(detected)) detected = 'en';
+  window.location.replace('/' + detected);
+}
+
+// Handle back/forward navigation
+window.addEventListener('popstate', function () {
+  var pl = getLangFromPath();
+  if (!pl) {
+    // Landed on '/' — redirect to detected language
+    var detected = localStorage.getItem('lang') || (navigator.language || '').slice(0, 2);
+    if (!SUPPORTED_LANGS.includes(detected)) detected = 'en';
+    window.location.replace('/' + detected);
+    return;
+  }
+  if (pl !== currentLang) applyLanguage(pl);
+});
+
+// Global click handler — language links + popup close
 document.addEventListener('click', function (e) {
+  // Language switcher links
+  var link = e.target.closest('.lang-link');
+  if (link) {
+    e.preventDefault();
+    history.pushState(null, '', '/' + link.dataset.lang);
+    applyLanguage(link.dataset.lang);
+    return;
+  }
+  // Close settings popup when clicking outside
   var popup = document.getElementById('settings-popup');
   var btn = document.querySelector('.settings-btn');
   if (popup && !popup.contains(e.target) && btn && !btn.contains(e.target)) {
@@ -1746,7 +2070,7 @@ document.addEventListener('click', function (e) {
   }
 });
 
-applyLanguage(currentLang);
+initLang();
 fetchRates();
 fetchCryptoPrices();
 renderFavs();

@@ -143,21 +143,35 @@ header h1 .accent {
   min-width: 70px;
 }
 
-.settings-item select {
+.lang-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
   margin-inline-start: auto;
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 5px 8px;
-  font-size: 12px;
-  font-family: var(--font-mono);
-  cursor: pointer;
+  max-width: 160px;
 }
 
-.settings-item select:focus {
-  outline: none;
+.lang-link {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.lang-link:hover {
   border-color: var(--accent);
+}
+
+.lang-link.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #000;
 }
 
 /* ===========================
